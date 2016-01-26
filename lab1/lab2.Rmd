@@ -1,0 +1,140 @@
+---
+title: "lab2"
+author: "Leopoldo Gutierre"
+date: "25 de janeiro de 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Parte I
+
+Arquivo .rda
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+load("pnud.rda")
+pnud_rda <- d
+rm(d)
+summary(pnud_rda[,1:10])
+```
+
+
+Arquivo .rds
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud_rds <- readRDS("pnud.rds")  
+summary(pnud_rds[,1:10])
+```
+
+
+Arquivo .csv
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud_csv <- read.table(file = "pnud2_win.csv", sep = ";",
+                       dec = ",", header = T, 
+                       stringsAsFactors = F)
+summary(pnud_csv[,1:10])
+```
+
+Arquivo .txt
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud_txt <- read.table(file = "pnud_win.txt", sep = " ",
+                       dec = ".", header = T, 
+                       stringsAsFactors = F)
+summary(pnud_txt[,1:10])
+```
+
+Arquivo .xlsx
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+# install.packages("openxlsx")
+library(openxlsx)
+# install.packages("readxl")
+library(readxl)
+
+pnud_xlsx <- read_excel("pnud_win.xlsx", sheet = 1, col_names = TRUE,
+                        col_types = NULL, na = "", skip = 0)
+summary(pnud_xlsx[,1:10])
+```
+
+Arquivo .sqlite
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+library(dplyr)
+# install.packages("RSQLite")
+library(RSQLite)
+pnud_sqlite <- data.frame(src_sqlite("pnud.sqlite") %>% tbl("pnud"))
+summary(pnud_sqlite[,1:10])
+```
+
+## Parte II
+
+Quais são os seis municípios com os maiores IDH municipais em 2010?
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud <- readRDS("pnud.rds")  
+library(dplyr)
+library(magrittr)
+
+# Montando a tabela
+pnud %>%
+  select(ano, ufn , municipio, idhm) %>%
+  filter(ano == 2010) %>%  
+  arrange(desc(idhm)) %>%
+  tbl_df() %>% 
+  print(n=6)
+
+```
+
+
+Qual é a unidade federativa com menor expectativa de vida média, ponderada pela população dos municípios em 2000?
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud <- readRDS("pnud.rds")  
+library(dplyr)
+library(magrittr)
+
+# Montando a tabela
+pnud %>%
+  select(ano, ufn, popt,espvida) %>%
+  filter(ano == 2000 ) %>%  
+  group_by(ufn) %>%
+  summarize(espvida_pop = sum(espvida*popt)/sum(popt)) %>% 
+  arrange(espvida_pop) %>% 
+  print(n=1)
+```
+
+
+Quais são os municípios outliers com relação ao índice de Gini em 1991 e em 2010?
+```{r}
+setwd("C:/Users/leopo/Meus Arquivos/Dropbox/IME/Verao_2016/curso-r-2016/Laboratorios/lab2_dados/")
+pnud <- readRDS("pnud.rds")  
+library(dplyr)
+library(magrittr)
+
+# Montando a tabela
+pnud %>%
+  select(ano, ufn, gini) %>%
+  group_by(ano) %>%
+  summarize(outn = mean(gini)-2*sd(gini), outp = mean(gini)+2*sd(gini) )
+
+pnud %>%
+  select(ano, ufn, municipio, gini) %>%
+  filter(ano == 1991) %>%
+  filter( gini>mean(gini)+2*sd(gini) ) %>%
+  arrange(desc(gini)) %>% 
+  tbl_df() %>% 
+  print(n=1000)
+
+pnud %>%
+  select(ano, ufn, municipio, gini) %>%
+  filter(ano == 2010) %>%
+  filter( gini>mean(gini)+2*sd(gini) ) %>%
+  arrange(desc(gini)) %>% 
+  tbl_df() %>% 
+  print(n=1000)
+```
