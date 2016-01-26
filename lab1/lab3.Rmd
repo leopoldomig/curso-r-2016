@@ -1,0 +1,165 @@
+---
+title: "lab3"
+author: "Leopoldo Gutierre"
+date: "26 de janeiro de 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(nycflights13)
+
+##############
+### filter ###
+##############
+
+# Atribua a uma tabela apenas os voos de janeiro de 2013.
+flights %>%
+  filter(year == 2013 | month == 1) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+# Atribua a uma tabela apenas os voos de janeiro ou fevereiro de 2013.
+flights %>%
+  filter(year == 2013 | month < 3) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+# Atribua a uma tabela apenas os vôos com distância maior do que 1000 milhas.
+flights %>%
+  filter(distance > 1000) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+##############
+### select ###
+##############
+
+# Atribua a uma tabela apenas as colunas month e dep_delay.
+flights %>%
+  select(month, dep_delay) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+# Atribua a uma tabela apenas as colunas month e dep_delay, os nomes dessas colunas devem ser mese atraso.
+flights %>%
+  select(mes=month,atraso=dep_delay) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+# Retire da tabela as colunas tailnum, origin e dest
+flights %>%
+  select(-tailnum, -origin, -dest) %>%
+  tbl_df() %>% 
+  print(n=5)
+
+##############
+### mutate ###
+##############
+
+# Calcule as colunas ganho_de_tempo que é dado por dep_delay - arr_delay  e velocidade dada por distance / air_time * 60.
+flights %>%  
+  select(dep_delay, arr_delay, distance, air_time) %>% 
+  mutate(ganho_de_tempo = dep_delay - arr_delay , velocidade =  distance / air_time * 60) %>% 
+  tbl_df() %>% 
+  print(n=5)
+
+# Calcule o horário de chegada considerando as colunas hour, minute e air_time. A tabela deve conter duas colunas novas: hour2 com a hora de chegada e minute2 com o minuto de chegada.
+
+flights %>%  
+  select(hour, minute, air_time) %>% 
+  mutate(hour2 = trunc((hour*60 + minute + air_time)/60) , minute2 =  (hour*60 + minute + air_time) - trunc((hour*60 + minute + air_time)/60)*60 ) %>% 
+  tbl_df() %>% 
+  print(n=50)
+
+#################
+### summarise ###
+#################
+
+# Calcule a média da distância de todos os vôos.
+flights %>%  
+  summarise(mean(distance)) %>% 
+  tbl_df()
+
+# Calcule a média da distância dos vôos por mês
+flights %>%  
+  group_by(year,month) %>%
+  summarise(mean(distance)) %>% 
+  tbl_df()
+
+# Calcule a média, mediana, primeiro quartil e terceiro quartil do tempo de viagem por mês.
+flights %>%  
+  group_by(year,month) %>%
+  summarise(q25 = quantile(air_time, probs = 0.25 , na.rm = TRUE, names = FALSE),
+            q50 = quantile(air_time, probs = 0.50 , na.rm = TRUE, names = FALSE),
+            q75 = quantile(air_time, probs = 0.75 , na.rm = TRUE, names = FALSE)) %>% 
+  tbl_df()
+
+###############
+### arrange ###
+###############
+
+# Ordene a base de dados pelo atraso na partida em ordem crescente.
+flights %>%
+  arrange(dep_delay) %>% 
+  print(n=5)
+
+# Repita a questão anterior, porém na ordem decrescente.
+flights %>%
+  arrange(desc(dep_delay)) %>% 
+  print(n=5)
+
+##############
+### spread ###
+##############
+
+# Crie uma tabela em que cada linha é um dia e cada coluna é o atraso médio de partida por mês.
+flights %>%
+  group_by(month, day) %>%
+  summarise(atraso_medio_partida = mean(dep_delay,na.rm = TRUE)) %>%
+  ungroup() %>%
+  spread(month, atraso_medio_partida) %>% 
+  tbl_df() %>% 
+  print(n=6)
+
+# Repita a mesma operação, mas dessa vez cada coluna será uma hora do dia.
+flights %>%
+  group_by( day, hour) %>%
+  summarise(atraso_medio_partida = mean(dep_delay,na.rm = TRUE)) %>%
+  ungroup() %>%
+  spread(day, atraso_medio_partida) %>% 
+  tbl_df() %>% 
+  print(n=6)
+
+##############
+### gather ###
+##############
+# Considerando as tabelas criadas nas perguntas sobre o spread: Transforme-as em um formato tidy.
+
+# Primeiro caso
+flights %>%
+  group_by(month, day) %>%
+  summarise(atraso_medio_partida = mean(dep_delay,na.rm = TRUE)) %>%
+  ungroup() %>%
+  spread(month, atraso_medio_partida) %>% 
+  gather(month, atraso_medio_partida,2:13 ) %>% 
+  tbl_df() %>% 
+  print(n=6)
+
+# Segundo Caso
+flights %>%
+  group_by(day, hour) %>%
+  summarise(atraso_medio_partida = mean(dep_delay,na.rm = TRUE)) %>%
+  ungroup() %>%
+  spread(day, atraso_medio_partida) %>% 
+  gather(day, atraso_medio_partida,2:32 ) %>% 
+  tbl_df() %>% 
+  print(n=6)
+```
